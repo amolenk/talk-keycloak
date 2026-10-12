@@ -1,0 +1,22 @@
+{
+  "realm": "city-picks", "enabled": true, "displayName": "City Picks", "registrationAllowed": true, "rememberMe": false,
+  "accessTokenLifespan": 300, "ssoSessionIdleTimeout": 1800, "ssoSessionMaxLifespan": 36000,
+  "roles": { "realm": [{"name":"traveler"},{"name":"curator"},{"name":"default-roles-city-picks","composite":true,"composites":{"realm":["traveler"]}}] },
+  "defaultRole": {"name":"default-roles-city-picks"},
+  "clients": [
+    {"clientId":"city-picks-api","enabled":true,"bearerOnly":true},
+    {"clientId":"city-picks-web","enabled":true,"publicClient":true,"fullScopeAllowed":false,"standardFlowEnabled":true,"directAccessGrantsEnabled":false,"implicitFlowEnabled":false,"serviceAccountsEnabled":false,
+      "redirectUris":["https://localhost:7100/authentication/login-callback"],"webOrigins":["https://localhost:7100"],"attributes":{"pkce.code.challenge.method":"S256","post.logout.redirect.uris":"https://localhost:7100/authentication/logout-callback"},
+      "protocolMappers":[
+        {"name":"api-audience","protocol":"openid-connect","protocolMapper":"oidc-audience-mapper","config":{"included.client.audience":"city-picks-api","access.token.claim":"true","id.token.claim":"false"}},
+        {"name":"application-roles","protocol":"openid-connect","protocolMapper":"oidc-usermodel-realm-role-mapper","config":{"claim.name":"roles","multivalued":"true","jsonType.label":"String","access.token.claim":"true","id.token.claim":"false"}}
+      ]
+    }
+  ],
+  "scopeMappings":[{"client":"city-picks-web","roles":["traveler","curator"]}],
+  "users":[
+    {"username":"traveler","enabled":true,"email":"traveler@example.test","firstName":"Demo","lastName":"Traveler","emailVerified":true,"realmRoles":["traveler"],"credentials":[{"type":"password","value":"demo","temporary":false}]},
+    {"username":"curator","enabled":true,"email":"curator@example.test","firstName":"Demo","lastName":"Curator","emailVerified":true,"realmRoles":["traveler","curator"],"credentials":[{"type":"password","value":"demo","temporary":false}]},
+    {"username":"observer","enabled":true,"email":"observer@example.test","firstName":"Demo","lastName":"Observer","emailVerified":true,"credentials":[{"type":"password","value":"demo","temporary":false}]}
+  ]
+}

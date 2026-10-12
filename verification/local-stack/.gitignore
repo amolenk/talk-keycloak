@@ -1,0 +1,12 @@
+**/bin/
+**/obj/
+__pycache__/
+*.pyc
+.aspire/
+.tools/
+.local/
+*.pfx
+*.key
+*.pem
+*.crt
+*-snapshot.json
