@@ -1,0 +1,28 @@
+<!doctype html>
+<!-- Throwaway: three City Picks visual directions on one page, selected with ?variant=A|B|C. -->
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>City Picks — visual prototype</title>
+  <link rel="stylesheet" href="prototype.css">
+  <script src="prototype.js" defer></script>
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+  <aside class="lab" aria-label="Prototype controls">
+    <strong>THROWAWAY UX PROTOTYPE</strong>
+    <label>Account <select id="actor"><option value="anonymous">Anonymous</option><option value="traveler">Traveler</option><option value="both">Traveler + curator</option><option value="curator">Curator only</option><option value="none">Signed in · no roles</option></select></label>
+    <label>Screen <select id="screen"><option value="browse">Browse</option><option value="favourites">Favourites</option><option value="profile">Profile / claims</option><option value="edit">Add / edit place</option><option value="login">Login</option><option value="register">Self-registration</option><option value="passkey">Passkey sign-in</option><option value="cancelled">Passkey cancelled</option><option value="error">Login error</option></select></label>
+    <label>Login theme <select id="theme"><option value="branded">City Picks branded</option><option value="stock">Stock-style comparison</option></select></label>
+    <span>All identity, API and passkey states are simulated.</span>
+  </aside>
+  <div id="app"></div>
+  <p id="announcement" class="announcement" role="status" aria-live="polite"></p>
+  <aside class="switcher" aria-label="Visual direction">
+    <button id="previous" aria-label="Previous visual direction">←</button>
+    <div><strong id="variant-name"></strong><small id="state"></small></div>
+    <button id="next" aria-label="Next visual direction">→</button>
+  </aside>
+</body>
+</html>
