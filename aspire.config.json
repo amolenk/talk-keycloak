@@ -1,0 +1,22 @@
+{
+  "appHost": {
+    "path": "src/CityPicks.AppHost/CityPicks.AppHost.csproj"
+  },
+  "profiles": {
+    "https": {
+      "applicationUrl": "https://localhost:17231;http://localhost:15164",
+      "environmentVariables": {
+        "ASPIRE_DASHBOARD_OTLP_ENDPOINT_URL": "https://localhost:21264",
+        "ASPIRE_RESOURCE_SERVICE_ENDPOINT_URL": "https://localhost:22294"
+      }
+    },
+    "http": {
+      "applicationUrl": "http://localhost:15164",
+      "environmentVariables": {
+        "ASPIRE_DASHBOARD_OTLP_ENDPOINT_URL": "http://localhost:19085",
+        "ASPIRE_RESOURCE_SERVICE_ENDPOINT_URL": "http://localhost:20119",
+        "ASPIRE_ALLOW_UNSECURED_TRANSPORT": "true"
+      }
+    }
+  }
+}

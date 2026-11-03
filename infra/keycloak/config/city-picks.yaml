@@ -1,0 +1,130 @@
+realm: city-picks
+enabled: true
+displayName: City Picks
+sslRequired: external
+registrationAllowed: false
+loginWithEmailAllowed: true
+rememberMe: false
+verifyEmail: false
+resetPasswordAllowed: true
+accessTokenLifespan: 300
+ssoSessionIdleTimeout: 1800
+ssoSessionMaxLifespan: 36000
+
+# Live edit: change loginTheme to city-picks, then Start keycloak-config again.
+loginTheme: city-picks
+# Live edit: change emailTheme to city-picks, then Start keycloak-config again.
+emailTheme: keycloak
+# Live edit: change displayName above to City Picks — Own Your Identity.
+
+# Realm emails (password reset, required actions) go to the local Mailpit container.
+# Host and port are the container-network address of the mailpit resource, set by the AppHost.
+smtpServer:
+  host: "$(env:CITYPICKS_SMTP_HOST)"
+  port: "$(env:CITYPICKS_SMTP_PORT)"
+  from: no-reply@citypicks.test
+  fromDisplayName: City Picks
+  auth: "false"
+  ssl: "false"
+  starttls: "false"
+
+webAuthnPolicyPasswordlessPasskeysEnabled: true
+webAuthnPolicyPasswordlessRpEntityName: City Picks
+webAuthnPolicyPasswordlessRpId: localhost
+webAuthnPolicyPasswordlessSignatureAlgorithms: [ES256]
+webAuthnPolicyPasswordlessAttestationConveyancePreference: none
+webAuthnPolicyPasswordlessAuthenticatorAttachment: ""
+webAuthnPolicyPasswordlessRequireResidentKey: "Yes"
+webAuthnPolicyPasswordlessUserVerificationRequirement: required
+webAuthnPolicyPasswordlessAcceptableAaguids: []
+requiredActions:
+  - alias: webauthn-register-passwordless
+    name: Webauthn Register Passwordless
+    providerId: webauthn-register-passwordless
+    enabled: true
+    defaultAction: false
+    priority: 70
+    config: {}
+
+defaultRole:
+  name: default-roles-city-picks
+roles:
+  realm:
+    - name: traveler
+      composite: false
+    - name: curator
+      composite: false
+    - name: default-roles-city-picks
+      composite: true
+      composites:
+        realm: [traveler]
+        client:
+          account: [manage-account, view-profile]
+clients:
+  - clientId: city-picks-bff
+    name: City Picks BFF
+    enabled: true
+    protocol: openid-connect
+    publicClient: false
+    secret: "$(env:CITYPICKS_BFF_SECRET)"
+    standardFlowEnabled: true
+    implicitFlowEnabled: false
+    directAccessGrantsEnabled: false
+    serviceAccountsEnabled: false
+    fullScopeAllowed: false
+    # The AppHost passes the BFF's URL; the default keeps a standalone import working.
+    redirectUris: ["$(env:CITYPICKS_BFF_URL:-https://localhost:7100)/signin-oidc"]
+    webOrigins: []
+    attributes:
+      pkce.code.challenge.method: S256
+      post.logout.redirect.uris: "$(env:CITYPICKS_BFF_URL:-https://localhost:7100)/signout-callback-oidc"
+    defaultClientScopes: [basic, profile, email]
+    optionalClientScopes: []
+    protocolMappers:
+      - name: application-roles
+        protocol: openid-connect
+        protocolMapper: oidc-usermodel-realm-role-mapper
+        config:
+          claim.name: roles
+          multivalued: "true"
+          jsonType.label: String
+          access.token.claim: "true"
+          id.token.claim: "true"
+          userinfo.token.claim: "true"
+      - name: api-audience
+        protocol: openid-connect
+        protocolMapper: oidc-audience-mapper
+        config:
+          included.custom.audience: city-picks-api
+          access.token.claim: "true"
+          id.token.claim: "false"
+scopeMappings:
+  - client: city-picks-bff
+    roles: [traveler, curator]
+users:
+  - username: traveler
+    enabled: true
+    emailVerified: true
+    firstName: Taylor
+    lastName: Traveler
+    email: traveler@example.test
+    credentials:
+      - type: password
+        value: "$(env:CITYPICKS_TRAVELER_PASSWORD)"
+        temporary: false
+    realmRoles: [traveler]
+    clientRoles:
+      account: [manage-account, view-profile]
+  - username: curator
+    enabled: true
+    emailVerified: true
+    firstName: Casey
+    lastName: Curator
+    email: curator@example.test
+    credentials:
+      - type: password
+        value: "$(env:CITYPICKS_CURATOR_PASSWORD)"
+        temporary: false
+    realmRoles: [traveler, curator]
+    clientRoles:
+      account: [manage-account, view-profile]

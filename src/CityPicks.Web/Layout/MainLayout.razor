@@ -1,0 +1,50 @@
+@inherits LayoutComponentBase
+@inject CityPicksClient CityPicks
+@inject NavigationManager Navigation
+@inject BffAuthenticationStateProvider Session
+
+<div class="site-frame">
+    <header class="site-header">
+        <a class="brand" href="/" aria-label="City Picks home">
+            <span class="brand-mark" aria-hidden="true">C</span>
+            <span>City Picks</span>
+        </a>
+        <span class="edition-label"><span class="status-dot" aria-hidden="true"></span> @(_city?.Name) city guide</span>
+        <nav class="account-navigation" aria-label="Account">
+            <a href="/favourites">Your favourites</a>
+            <AuthorizeView>
+                <Authorizing>
+                    <span role="status">Checking session…</span>
+                    <SignInPrompt Disabled="true" />
+                </Authorizing>
+                <Authorized>
+                    <a href="/profile">Your identity</a>
+                    <form action="/auth/logout" method="post" style="display: inline">
+                        <input type="hidden" name="__RequestVerificationToken" value="@Session.CsrfToken" />
+                        <button class="text-button" type="submit">Sign out</button>
+                    </form>
+                </Authorized>
+                <NotAuthorized>
+                    @if (Session.DiscoveryError is not null)
+                    {
+                        <span role="alert">@Session.DiscoveryError</span>
+                        <button class="text-button" @onclick="Session.RetryAsync">Retry session check</button>
+                    }
+                    <SignInPrompt Disabled="false" />
+                </NotAuthorized>
+            </AuthorizeView>
+        </nav>
+    </header>
+    @Body
+    <footer class="site-footer">Thoughtfully picked places for a good day@(_city is null ? "." : $" in {_city.Name}.")</footer>
+</div>
+
+@code {
+    private CityView? _city;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try { _city = await CityPicks.GetCityAsync(); }
+        catch (HttpRequestException) { /* The page supplies the actionable guide error. */ }
+    }
+}

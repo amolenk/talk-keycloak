@@ -1,0 +1,75 @@
+@page "/places/{Id}"
+@inject CityPicksClient CityPicks
+
+<PageTitle>@(_place?.Name ?? "Place details") · City Picks</PageTitle>
+
+<main id="main-content" class="page-shell detail-shell">
+    <a class="back-link" href="/">← All @(_city?.Name) places</a>
+    @if (_loading)
+    {
+        <p role="status" class="status-message">Loading place details…</p>
+    }
+    else if (_error is not null)
+    {
+        <p role="alert" class="status-message error">@_error</p>
+    }
+    else if (_place is null)
+    {
+        <p role="alert" class="status-message error">This place could not be found in the city guide.</p>
+    }
+    else
+    {
+        <article class="place-detail">
+            <img src="/images/@Uri.EscapeDataString(_place.Image)" alt="@_place.Name in @(_city?.Name)" />
+            <div class="detail-copy">
+                <p class="eyebrow">@_place.Category</p>
+                <h1>@_place.Name</h1>
+                <ManagePlaceLink Href="@($"/places/{_place.Id}/edit")" Label="Edit place" />
+                <p class="detail-description">@_place.Description</p>
+                <div class="address-block"><span>Find it</span><address>@_place.Address</address></div>
+                <AuthorizeView>
+                    <Authorizing>
+                        <p role="status">Checking your session…</p>
+                        <p><SignInPrompt Label="Sign in to save favourites" Disabled="true" /></p>
+                    </Authorizing>
+                    <NotAuthorized><p><SignInPrompt Label="Sign in to save favourites" Disabled="false" /></p></NotAuthorized>
+                    <Authorized><SaveFavourite PlaceId="@_place.Id" @key="_place.Id" /></Authorized>
+                </AuthorizeView>
+                <a class="text-link" href="/">Explore more @(_city?.Name) places</a>
+            </div>
+        </article>
+    }
+</main>
+
+@code {
+    [Parameter] public string Id { get; set; } = "";
+
+    private PlaceView? _place;
+    private CityView? _city;
+    private string? _error;
+    private bool _loading = true;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        _loading = true;
+        _place = null;
+        _error = null;
+        try
+        {
+            _city = await CityPicks.GetCityAsync();
+            _place = await CityPicks.GetPlaceAsync(Id);
+        }
+        catch (HttpRequestException exception) when (exception.StatusCode == System.Net.HttpStatusCode.NotFound)
+        {
+            _place = null;
+        }
+        catch (HttpRequestException)
+        {
+            _error = "Place details are unavailable right now. Please refresh in a moment.";
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+}

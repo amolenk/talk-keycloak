@@ -1,0 +1,10 @@
+@inject NavigationManager Navigation
+
+<button class="primary-button" disabled="@Disabled" @onclick="SignIn">@Label</button>
+
+@code {
+    [Parameter] public string Label { get; set; } = "Sign in";
+    [Parameter] public bool Disabled { get; set; }
+    private void SignIn() => Navigation.NavigateTo(
+        "/auth/login?returnUrl=" + Uri.EscapeDataString(new Uri(Navigation.Uri).PathAndQuery), forceLoad: true);
+}

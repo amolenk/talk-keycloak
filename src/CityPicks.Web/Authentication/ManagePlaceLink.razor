@@ -1,0 +1,29 @@
+@inject IdentityClient Identity
+
+<AuthorizeView>
+    <Authorized>
+        @if (_allowed)
+        {
+            <p><a class="text-link" href="@Href">@Label</a></p>
+        }
+    </Authorized>
+</AuthorizeView>
+
+@code {
+    [Parameter] public string Href { get; set; } = "/places/new";
+    [Parameter] public string Label { get; set; } = "Add a place";
+    [CascadingParameter] private Task<AuthenticationState> AuthenticationState { get; set; } = null!;
+    private bool _allowed;
+    private Task<AuthenticationState>? _loadedAuthentication;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (ReferenceEquals(_loadedAuthentication, AuthenticationState)) return;
+        _loadedAuthentication = AuthenticationState;
+        _allowed = false;
+        if ((await AuthenticationState).User.Identity?.IsAuthenticated != true) return;
+        try { _allowed = (await Identity.GetOwnIdentityAsync()).Permissions.CanManagePlaces; }
+        catch (BffSessionEndedException) { }
+        catch (HttpRequestException) { }
+    }
+}

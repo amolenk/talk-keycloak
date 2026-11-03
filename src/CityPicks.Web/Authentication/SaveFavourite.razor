@@ -1,0 +1,80 @@
+@inject IdentityClient Identity
+@inject FavouritesClient Favourites
+
+@if (_denied)
+{
+    <p role="status">@FavouritesClient.MissingTraveler</p>
+}
+else if (_loading)
+{
+    <p role="status">Checking favourites permission…</p>
+}
+else
+{
+    @if (_canSave)
+    {
+        <button class="primary-button" disabled="@(_busy || _saved)" @onclick="SaveAsync">@(_saved ? "Saved to favourites" : _busy ? "Saving…" : "Save to favourites")</button>
+        <p><a href="/favourites">See your saved places</a></p>
+    }
+    else
+    {
+        <button class="text-button" @onclick="LoadAsync">Retry checking favourites</button>
+    }
+    @if (_message is not null) { <p role="status">@_message</p> }
+    @if (_error is not null) { <p role="alert" class="status-message error">@_error</p> }
+}
+
+@code {
+    [Parameter, EditorRequired] public string PlaceId { get; set; } = "";
+    private bool _loading = true;
+    private bool _busy;
+    private bool _saved;
+    private bool _denied;
+    private bool _canSave;
+    private string? _message;
+    private string? _error;
+
+    protected override Task OnParametersSetAsync() => LoadAsync();
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        _canSave = false;
+        _denied = false;
+        _saved = false;
+        _error = _message = null;
+        try
+        {
+            _denied = !(await Identity.GetOwnIdentityAsync()).Permissions.CanUseFavourites;
+            if (!_denied)
+            {
+                _saved = (await Favourites.GetAsync()).Any(place => place.Id == PlaceId);
+                _canSave = true;
+            }
+        }
+        catch (BffSessionEndedException) { _error = FavouritesClient.SessionEnded; }
+        catch (HttpRequestException exception) { HandleFailure(exception, "Favourites are unavailable right now. Please retry shortly."); }
+        finally { _loading = false; }
+    }
+
+    private async Task SaveAsync()
+    {
+        _busy = true;
+        _error = _message = null;
+        try
+        {
+            await Favourites.SaveAsync(PlaceId);
+            _saved = true;
+            _message = "Saved to your favourites.";
+        }
+        catch (BffSessionEndedException) { _canSave = false; _error = FavouritesClient.SessionEnded; }
+        catch (HttpRequestException exception) { HandleFailure(exception, "This place could not be saved. Please try again."); }
+        finally { _busy = false; }
+    }
+
+    private void HandleFailure(HttpRequestException exception, string fallback)
+    {
+        if (exception.StatusCode == System.Net.HttpStatusCode.Forbidden) _denied = true;
+        else _error = exception.StatusCode == System.Net.HttpStatusCode.Unauthorized ? FavouritesClient.SessionEnded : fallback;
+    }
+}

@@ -1,0 +1,34 @@
+[
+  {
+    "id": "city-hall",
+    "name": "Stockholm City Hall",
+    "category": "Architecture · Kungsholmen",
+    "description": "Follow the brick arcades to the waterfront and take a quiet moment looking across Riddarfjärden.",
+    "image": "city-hall.jpg",
+    "address": "Hantverkargatan 1, 111 52 Stockholm"
+  },
+  {
+    "id": "dramaten",
+    "name": "Royal Dramatic Theatre",
+    "category": "Culture · Östermalm",
+    "description": "Pause outside Dramaten for the sculpted façade, then continue along the harbour towards Strandvägen.",
+    "image": "dramaten.jpg",
+    "address": "Nybroplan, 111 47 Stockholm"
+  },
+  {
+    "id": "skeppsbron",
+    "name": "Skeppsbron",
+    "category": "Waterfront · Gamla stan",
+    "description": "Walk the Old Town's eastern quay for open water, passing boats and a long line of warm-coloured façades.",
+    "image": "skeppsbron.jpg",
+    "address": "Skeppsbron, 111 30 Stockholm"
+  },
+  {
+    "id": "stortorget",
+    "name": "Stortorget",
+    "category": "Neighbourhood · Gamla stan",
+    "description": "Find a seat near the red and yellow houses, then explore the narrow lanes leading away from the square.",
+    "image": "stortorget.jpg",
+    "address": "Stortorget, 111 29 Stockholm"
+  }
+]

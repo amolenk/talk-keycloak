@@ -1,0 +1,119 @@
+@page "/favourites"
+@inject IdentityClient Identity
+@inject FavouritesClient FavouritesApi
+
+<PageTitle>Your favourites · City Picks</PageTitle>
+<main id="main-content" class="page-shell detail-shell favourites-shell">
+    <h1 tabindex="-1" @ref="_heading">Your favourites</h1>
+    <AuthorizeView>
+        <Authorizing><p role="status">Checking your session…</p><SignInPrompt Disabled="true" /></Authorizing>
+        <NotAuthorized><p>Sign in to see your private favourites.</p><SignInPrompt Disabled="false" /></NotAuthorized>
+        <Authorized>
+            @if (_denied)
+            {
+                <p role="status">@FavouritesClient.MissingTraveler</p>
+            }
+            else if (_loading)
+            {
+                <p role="status">Loading your favourites…</p>
+            }
+            else
+            {
+                @if (_message is not null) { <p role="status">@_message</p> }
+                @if (_error is not null) { <p role="alert" class="status-message error">@_error</p> }
+                @if (_places is null)
+                {
+                    <button class="primary-button" @onclick="LoadAsync">Retry loading favourites</button>
+                }
+                else if (_places.Length == 0)
+                {
+                    <p>You haven't saved any places yet. Choose a place in the guide, then save it here for later.</p>
+                }
+                else
+                {
+                    <p class="intro-copy">Your saved places are private to your account.</p>
+                    <div class="place-grid">
+                        @foreach (var place in _places)
+                        {
+                            <article class="place-card" @key="place.Id">
+                                <a class="place-image-link" href="/places/@Uri.EscapeDataString(place.Id)" aria-label="See details for @place.Name">
+                                    <img class="place-image" src="/images/@Uri.EscapeDataString(place.Image)" alt="@place.Name" loading="lazy" />
+                                </a>
+                                <div class="place-card-copy">
+                                    <p class="place-category">@place.Category</p>
+                                    <h2><a href="/places/@Uri.EscapeDataString(place.Id)">@place.Name</a></h2>
+                                    <p class="place-description">@place.Description</p>
+                                    <button class="text-button" disabled="@_busy" aria-label="Remove @place.Name from favourites" @onclick="() => RemoveAsync(place)">Remove from favourites</button>
+                                </div>
+                            </article>
+                        }
+                    </div>
+                }
+            }
+        </Authorized>
+    </AuthorizeView>
+    <p><a class="text-link" href="/">Explore the city guide</a></p>
+</main>
+
+@code {
+    [CascadingParameter] private Task<AuthenticationState> AuthenticationState { get; set; } = null!;
+    private PlaceView[]? _places;
+    private bool _loading = true;
+    private bool _denied;
+    private bool _busy;
+    private bool _focusHeading;
+    private ElementReference _heading;
+    private string? _error;
+    private string? _message;
+    private Task<AuthenticationState>? _loadedAuthentication;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (ReferenceEquals(_loadedAuthentication, AuthenticationState)) return;
+        _loadedAuthentication = AuthenticationState;
+        _places = null;
+        _denied = false;
+        if ((await AuthenticationState).User.Identity?.IsAuthenticated == true) await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        _error = _message = null;
+        try
+        {
+            _denied = !(await Identity.GetOwnIdentityAsync()).Permissions.CanUseFavourites;
+            if (!_denied) _places = await FavouritesApi.GetAsync();
+        }
+        catch (BffSessionEndedException) { _error = FavouritesClient.SessionEnded; }
+        catch (HttpRequestException exception) { HandleFailure(exception, "Your favourites could not be loaded. Please retry shortly."); }
+        finally { _loading = false; }
+    }
+
+    private async Task RemoveAsync(PlaceView place)
+    {
+        _busy = true;
+        _error = _message = null;
+        try
+        {
+            await FavouritesApi.RemoveAsync(place.Id);
+            _places = _places!.Where(item => item.Id != place.Id).ToArray();
+            _message = $"{place.Name} removed from your favourites.";
+            _focusHeading = true;
+        }
+        catch (BffSessionEndedException) { _places = null; _error = FavouritesClient.SessionEnded; }
+        catch (HttpRequestException exception) { HandleFailure(exception, $"{place.Name} could not be removed. Please try again."); }
+        finally { _busy = false; }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (_focusHeading) { _focusHeading = false; await _heading.FocusAsync(); }
+    }
+
+    private void HandleFailure(HttpRequestException exception, string fallback)
+    {
+        if (exception.StatusCode == System.Net.HttpStatusCode.Forbidden) { _denied = true; _places = null; }
+        else _error = exception.StatusCode == System.Net.HttpStatusCode.Unauthorized ? FavouritesClient.SessionEnded : fallback;
+    }
+}

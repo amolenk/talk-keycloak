@@ -1,0 +1,34 @@
+[
+  {
+    "id": "charles-bridge",
+    "name": "Charles Bridge",
+    "category": "Landmark · Old Town",
+    "description": "Walk the stone span early, when the river is bright and the towers are still waking up.",
+    "image": "charles-bridge.jpg",
+    "address": "Karlův most, 110 00 Praha 1"
+  },
+  {
+    "id": "old-town-square",
+    "name": "Old Town Square",
+    "category": "Neighbourhood · Old Town",
+    "description": "Take in the shifting façades, then slip into one of the smaller streets just beyond the square.",
+    "image": "old-town-square.jpg",
+    "address": "Staroměstské náměstí, 110 00 Praha 1"
+  },
+  {
+    "id": "prague-castle",
+    "name": "Prague Castle",
+    "category": "Architecture · Hradčany",
+    "description": "The castle complex rewards an unhurried wander, especially as the evening light settles over the city.",
+    "image": "prague-castle.jpg",
+    "address": "Hradčany, 119 08 Praha 1"
+  },
+  {
+    "id": "lennon-wall",
+    "name": "Lennon Wall",
+    "category": "Culture · Malá Strana",
+    "description": "A changing wall of colour and messages in a quiet corner of Malá Strana.",
+    "image": "lennon-wall.jpg",
+    "address": "Velkopřevorské náměstí, 118 00 Praha 1"
+  }
+]

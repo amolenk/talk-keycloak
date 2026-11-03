@@ -1,0 +1,22 @@
+@inject ManagementClient Management
+
+<details id="demo-tools" class="identity-panel">
+    <summary>Demo tools</summary>
+    <p>Submit an existing place's unchanged current fields to the ordinary update operation. Use the place editor separately for a visible change.</p>
+    <button class="primary-button" disabled="@_busy" @onclick="() => ProbeAsync(false)">Update without session</button>
+    <button class="primary-button" disabled="@_busy" @onclick="() => ProbeAsync(true)">Update through BFF</button>
+    <p role="status">@_result</p>
+</details>
+
+@code {
+    private bool _busy;
+    private string _result = "No request sent.";
+    private async Task ProbeAsync(bool sendSession)
+    {
+        _busy = true;
+        try { _result = await Management.ProbeAsync(sendSession); }
+        catch (BffSessionEndedException) { _result = "No update sent: your session has ended. Sign in again."; }
+        catch (HttpRequestException) { _result = "The update request could not be completed. Please retry shortly."; }
+        finally { _busy = false; }
+    }
+}

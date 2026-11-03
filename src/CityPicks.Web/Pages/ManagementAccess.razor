@@ -1,0 +1,88 @@
+@page "/places/new"
+@page "/places/{Id}/edit"
+@using Microsoft.AspNetCore.Components.Forms
+@inject IdentityClient Identity
+@inject CityPicksClient CityPicks
+@inject ManagementClient Management
+@inject NavigationManager Navigation
+
+<PageTitle>Place management · City Picks</PageTitle>
+<main id="main-content" class="page-shell detail-shell">
+    <h1>@(Id is null ? "Add a place" : "Edit place")</h1>
+    @if (_loading) { <p role="status">Checking management permission…</p> }
+    else if (!_allowed) { <p role="status">Place management is denied. The API requires an enabled curator policy.</p> }
+    else if (_input is not null)
+    {
+        <EditForm Model="_input" OnValidSubmit="SaveAsync" class="place-editor">
+            <DataAnnotationsValidator />
+            <ValidationSummary />
+            <label for="place-name">Name</label><InputText id="place-name" @bind-Value="_input.Name" maxlength="160" />
+            <label for="place-category">Category</label><InputText id="place-category" @bind-Value="_input.Category" maxlength="80" />
+            <label for="place-description">Description</label><InputTextArea id="place-description" @bind-Value="_input.Description" maxlength="1000" />
+            <label for="place-image">Image</label>
+            <InputSelect id="place-image" @bind-Value="_input.Image">
+                <option value="">Choose a prepared image</option>
+                @foreach (var image in _images) { <option value="@image">@image</option> }
+            </InputSelect>
+            <label for="place-address">Address</label><InputText id="place-address" @bind-Value="_input.Address" maxlength="240" />
+            <button class="primary-button" type="submit" disabled="@_saving">Save place</button>
+            <a class="text-link" href="@(Id is null ? "/" : $"/places/{Id}")">Cancel</a>
+        </EditForm>
+    }
+    @if (_error is not null) { <p role="alert">@_error</p> }
+</main>
+
+@code {
+    [Parameter] public string? Id { get; set; }
+    [CascadingParameter] private Task<AuthenticationState> AuthenticationState { get; set; } = null!;
+    private bool _loading = true, _allowed, _saving;
+    private PlaceEdit? _input;
+    private string[] _images = [];
+    private string? _error;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        _loading = true;
+        _allowed = false;
+        _input = null;
+        _error = null;
+        try
+        {
+            if ((await AuthenticationState).User.Identity?.IsAuthenticated != true) return;
+            _allowed = (await Identity.GetOwnIdentityAsync()).Permissions.CanManagePlaces;
+            if (!_allowed) return;
+            _images = await Management.GetImagesAsync();
+            _input = Id is null ? new() : PlaceEdit.From(await CityPicks.GetPlaceAsync(Id)
+                ?? throw new HttpRequestException("The place was not found."));
+        }
+        catch (BffSessionEndedException) { _error = "Your session has ended. Sign in again."; }
+        catch (HttpRequestException) { _error = "The place editor could not be loaded. Check the place address or retry shortly."; }
+        finally { _loading = false; }
+    }
+
+    private async Task SaveAsync()
+    {
+        _saving = true;
+        _error = null;
+        try
+        {
+            if (!_images.Contains(_input!.Image, StringComparer.Ordinal)) { _error = "Choose an image from the prepared local catalogue."; return; }
+            using var response = await Management.SaveAsync(Id, _input);
+            if (response.StatusCode == System.Net.HttpStatusCode.BadRequest)
+            {
+                var validation = await response.Content.ReadFromJsonAsync<ValidationErrors>();
+                _error = string.Join(" ", validation?.Errors.Values.SelectMany(messages => messages) ?? ["Check all required fields."]);
+                return;
+            }
+            if (response.StatusCode is System.Net.HttpStatusCode.Forbidden or System.Net.HttpStatusCode.Unauthorized)
+            { _allowed = false; _error = "The API denied this operation. Sign in again and check your permissions."; return; }
+            response.EnsureSuccessStatusCode();
+            var place = await response.Content.ReadFromJsonAsync<PlaceView>();
+            Navigation.NavigateTo($"/places/{place!.Id}");
+        }
+        catch (BffSessionEndedException) { _error = "Your session has ended. Sign in again."; }
+        catch (HttpRequestException) { _error = "The place could not be saved. Please retry shortly."; }
+        finally { _saving = false; }
+    }
+    private sealed record ValidationErrors(Dictionary<string, string[]> Errors);
+}

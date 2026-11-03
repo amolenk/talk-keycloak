@@ -1,0 +1,72 @@
+@page "/"
+@inject CityPicksClient CityPicks
+
+<PageTitle>@(_city?.Name ?? "Places"), picked for you · City Picks</PageTitle>
+
+<main id="main-content" class="page-shell">
+    @if (_loading)
+    {
+        <p class="status-message" role="status">Loading the city guide…</p>
+    }
+    else if (_error is not null)
+    {
+        <p class="status-message error" role="alert">@_error</p>
+    }
+    else if (_city is not null)
+    {
+        <section class="city-intro" aria-labelledby="city-heading">
+            <p class="eyebrow">A city guide, made personal</p>
+            <h1 id="city-heading">A little more @_city.Name.</h1>
+            <p class="intro-copy">@_city.Introduction</p>
+            <ManagePlaceLink />
+            <div class="intro-meta"><span class="status-dot" aria-hidden="true"></span> @_places.Count places to begin</div>
+        </section>
+
+        <section class="places-section" aria-labelledby="places-heading">
+            <div class="section-heading">
+                <div><p class="eyebrow">The local edit</p><h2 id="places-heading">Places worth a pause</h2></div>
+                <span class="section-note">Selected with care</span>
+            </div>
+            <div class="place-grid">
+                @foreach (var place in _places)
+                {
+                    <article class="place-card">
+                        <a class="place-image-link" href="/places/@place.Id" aria-label="See details for @place.Name">
+                            <img class="place-image" src="/images/@Uri.EscapeDataString(place.Image)" alt="@place.Name in @_city.Name" />
+                        </a>
+                        <div class="place-card-copy">
+                            <p class="place-category">@place.Category</p>
+                            <h3><a href="/places/@place.Id">@place.Name</a></h3>
+                            <p class="place-description">@place.Description</p>
+                            <p class="place-address">@place.Address</p>
+                        </div>
+                    </article>
+                }
+            </div>
+        </section>
+    }
+</main>
+
+@code {
+    private CityView? _city;
+    private IReadOnlyList<PlaceView> _places = [];
+    private string? _error;
+    private bool _loading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            _city = await CityPicks.GetCityAsync();
+            _places = await CityPicks.GetPlacesAsync();
+        }
+        catch (HttpRequestException)
+        {
+            _error = "The city guide is unavailable right now. Please refresh in a moment.";
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+}

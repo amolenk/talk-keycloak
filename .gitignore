@@ -1,0 +1,18 @@
+**/bin/
+**/obj/
+**/TestResults/
+**/playwright/.local-browsers/
+.tools/
+.local/
+**/.local/
+**/appsettings.*.local.json
+.DS_Store
+**/__pycache__/
+**/node_modules/
+infra/keycloak/theme/dist/
+infra/keycloak/theme/dist_keycloak/
+infra/keycloak/theme/storybook-static/
+infra/keycloak/email-provider/target/
+infra/keycloak/email-provider/dist/
+# Slides and speaker notes live in a separate private repository.
+presentation/

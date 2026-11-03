@@ -1,0 +1,82 @@
+@page "/profile"
+@inject IdentityClient Identity
+
+<PageTitle>Your identity · City Picks</PageTitle>
+<main id="main-content" class="page-shell detail-shell">
+    <h1>Your identity</h1>
+    <AuthorizeView>
+        <Authorizing><p role="status">Checking your session…</p></Authorizing>
+        <NotAuthorized>
+            <p>Sign in to inspect your own identity.</p>
+            <SignInPrompt />
+        </NotAuthorized>
+        <Authorized Context="authentication">
+            <p class="intro-copy">The BFF supplies your session identity to the browser. It attaches an access token on the server; the Places API independently validates that token.</p>
+            <p><a class="text-link" href="@($"{authentication.User.FindFirst("iss")?.Value}/account/")">Manage your account in Keycloak</a></p>
+            <div class="identity-grid">
+                <section id="browser-identity" class="identity-panel" aria-labelledby="browser-heading">
+                    <h2 id="browser-heading">Browser identity</h2>
+                    <dl>
+                        <dt>Display name</dt><dd>@Value(authentication.User.FindFirst("name")?.Value)</dd>
+                        <dt>Username</dt><dd>@Value(authentication.User.FindFirst("preferred_username")?.Value)</dd>
+                        <dt>Subject</dt><dd>@Value(authentication.User.FindFirst("sub")?.Value)</dd>
+                        <dt>Issuer (sign-in authority)</dt><dd>@Value(authentication.User.FindFirst("iss")?.Value)</dd>
+                        <dt>Email</dt><dd>@Value(authentication.User.FindFirst("email")?.Value)</dd>
+                        <dt>Application roles</dt><dd>@Roles(authentication.User.FindAll("roles").Select(claim => claim.Value))</dd>
+                    </dl>
+                </section>
+                <section id="api-identity" class="identity-panel" aria-labelledby="api-heading">
+                    <h2 id="api-heading">API-validated identity</h2>
+                    @if (_error is not null)
+                    {
+                        <p role="alert">@_error</p>
+                    }
+                    else if (_identity is null)
+                    {
+                        <p role="status">Loading validated identity…</p>
+                    }
+                    else
+                    {
+                        <dl>
+                            <dt>Display name</dt><dd>@Value(_identity.DisplayName)</dd>
+                            <dt>Username</dt><dd>@Value(_identity.Username)</dd>
+                            <dt>Subject</dt><dd>@Value(_identity.Subject)</dd>
+                            <dt>Issuer</dt><dd>@Value(_identity.Issuer)</dd>
+                            <dt>Email</dt><dd>@Value(_identity.Email)</dd>
+                            <dt>Application roles</dt><dd>@Roles(_identity.Roles)</dd>
+                        </dl>
+                        <div id="permissions">
+                            <h3>Application permissions</h3>
+                            <p>Favourites: @(_identity.Permissions.CanUseFavourites ? "Allowed" : "Denied")</p>
+                            <p>Management: @(_identity.Permissions.CanManagePlaces ? "Allowed" : "Denied")</p>
+                            <p>Management follows the API's effective source policy; curator is required when enabled.</p>
+                        </div>
+                    }
+                </section>
+            </div>
+            <DemoTools />
+        </Authorized>
+    </AuthorizeView>
+</main>
+
+@code {
+    [CascadingParameter] private Task<AuthenticationState> AuthenticationState { get; set; } = null!;
+    private IdentityView? _identity;
+    private string? _error;
+    private Task<AuthenticationState>? _loadedAuthentication;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (ReferenceEquals(_loadedAuthentication, AuthenticationState)) return;
+        _loadedAuthentication = AuthenticationState;
+        _identity = null;
+        _error = null;
+        if ((await AuthenticationState).User.Identity?.IsAuthenticated != true) return;
+        try { _identity = await Identity.GetOwnIdentityAsync(); }
+        catch (BffSessionEndedException) { _error = "Your session has ended. Sign in again."; }
+        catch (HttpRequestException) { _error = "The API could not validate your identity. Please sign in again or retry shortly."; }
+    }
+
+    private static string Value(string? value) => string.IsNullOrWhiteSpace(value) ? "Not provided" : value;
+    private static string Roles(IEnumerable<string> roles) => roles.Any() ? string.Join(", ", roles.Order()) : "None";
+}

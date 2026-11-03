@@ -1,0 +1,45 @@
+{
+    "name": "city-picks-theme",
+    "version": "1.0.0",
+    "private": true,
+    "description": "City Picks Keycloak theme (login + email), based on keycloakify-starter",
+    "type": "module",
+    "scripts": {
+        "postinstall": "keycloakify sync-extensions",
+        "dev": "vite",
+        "build": "tsc && vite build",
+        "build-keycloak-theme": "npm run build && keycloakify build",
+        "storybook": "storybook dev -p 6006",
+        "build-storybook": "storybook build",
+        "lint": "eslint .",
+        "format": "prettier . --write"
+    },
+    "dependencies": {
+        "@keycloakify/email-native": "260007.0.0",
+        "keycloakify": "11.16.3",
+        "react": "18.3.1",
+        "react-dom": "18.3.1"
+    },
+    "devDependencies": {
+        "@eslint/js": "10.0.1",
+        "@storybook/react-vite": "10.6.2",
+        "@types/node": "22.20.5",
+        "@types/react": "18.3.31",
+        "@types/react-dom": "18.3.7",
+        "@vitejs/plugin-react": "5.2.0",
+        "eslint": "10.13.0",
+        "eslint-config-prettier": "10.1.8",
+        "eslint-plugin-react-hooks": "7.1.1",
+        "eslint-plugin-react-refresh": "0.5.7",
+        "eslint-plugin-storybook": "10.6.2",
+        "globals": "17.13.0",
+        "prettier": "3.9.10",
+        "storybook": "10.6.2",
+        "typescript": "5.7.3",
+        "typescript-eslint": "8.71.2",
+        "vite": "7.3.7"
+    },
+    "engines": {
+        "node": ">=22.13.0"
+    }
+}
