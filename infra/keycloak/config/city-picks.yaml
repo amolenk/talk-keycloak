@@ -12,7 +12,7 @@ ssoSessionIdleTimeout: 1800
 ssoSessionMaxLifespan: 36000
 
 # Live edit: change loginTheme to city-picks, then Start keycloak-config again.
-loginTheme: city-picks
+loginTheme: keycloak
 # Live edit: change emailTheme to city-picks, then Start keycloak-config again.
 emailTheme: keycloak
 # Live edit: change displayName above to City Picks — Own Your Identity.
@@ -28,7 +28,7 @@ smtpServer:
   ssl: "false"
   starttls: "false"
 
-webAuthnPolicyPasswordlessPasskeysEnabled: true
+webAuthnPolicyPasswordlessPasskeysEnabled: false
 webAuthnPolicyPasswordlessRpEntityName: City Picks
 webAuthnPolicyPasswordlessRpId: localhost
 webAuthnPolicyPasswordlessSignatureAlgorithms: [ES256]
@@ -41,7 +41,7 @@ requiredActions:
   - alias: webauthn-register-passwordless
     name: Webauthn Register Passwordless
     providerId: webauthn-register-passwordless
-    enabled: true
+    enabled: false
     defaultAction: false
     priority: 70
     config: {}

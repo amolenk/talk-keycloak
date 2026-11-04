@@ -7,7 +7,7 @@ public static class PlaceEndpoints
 {
     // Live authorization edit: replace "DenyManagement" with "CanManagePlaces".
     // Both mutations and the permission view use this exact policy.
-    public const string ManagementPolicy = "CanManagePlaces";
+    public const string ManagementPolicy = "DenyManagement";
 
     public static void MapPlaceManagement(this WebApplication app)
     {
