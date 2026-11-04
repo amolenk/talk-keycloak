@@ -14,5 +14,6 @@ infra/keycloak/theme/dist_keycloak/
 infra/keycloak/theme/storybook-static/
 infra/keycloak/email-provider/target/
 infra/keycloak/email-provider/dist/
+.pnpm-store/
 # Slides and speaker notes live in a separate private repository.
 presentation/

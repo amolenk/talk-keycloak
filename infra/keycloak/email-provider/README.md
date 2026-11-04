@@ -12,8 +12,8 @@ model dumps, and Keycloak's JSON serializer instead of the PoC's hand-written se
 
 Build from the repo root with `bash scripts/build-email-provider.sh`. The Docker build
 exports `dist/keycloak-email-webhook-provider.jar`; Aspire mounts that file alongside the
-independent Keycloakify theme JAR. `CityPicks:EmailMode=webhook` selects both providers;
-`smtp` selects Keycloak's `freemarker` and `default` providers.
+independent Keycloakify theme JAR. Webhook mode is the default and selects both providers;
+`CityPicks:EmailMode=smtp` selects Keycloak's `freemarker` and `default` providers.
 
 Compile against the exact server version on upgrades and run real email flows. Keycloak
 26.8.0 adds `sendVerifiableCredentialOffer`, absent from the PoC's 26.6.3 interface.

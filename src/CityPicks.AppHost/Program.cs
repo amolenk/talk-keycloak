@@ -45,11 +45,12 @@ var communication = builder.AddProject<Projects.CityPicks_Communication>("commun
     .WithHttpHealthCheck("/health", endpointName: "http")
     .WaitFor(mailpit);
 
-var emailMode = builder.Configuration["CityPicks:EmailMode"] ?? "smtp";
+var emailMode = builder.Configuration["CityPicks:EmailMode"]
+    ?? (builder.Environment.IsEnvironment("Testing") ? "smtp" : "webhook");
 if (emailMode is not ("smtp" or "webhook"))
     throw new InvalidOperationException("CityPicks:EmailMode must be smtp or webhook.");
 var emailProviderJar = RepoPath("infra/keycloak/email-provider/dist/keycloak-email-webhook-provider.jar");
-if (!File.Exists(emailProviderJar))
+if (emailMode == "webhook" && !File.Exists(emailProviderJar))
     throw new InvalidOperationException("Email provider JAR missing. Run bash ./scripts/build-email-provider.sh.");
 
 var themeDirectory = RepoPath("infra/keycloak/theme/dist_keycloak");
@@ -61,10 +62,8 @@ if (!File.Exists(Path.Combine(themeDirectory, "city-picks.jar")))
 var keycloak = builder.AddKeycloak("keycloak", port: 8443, adminUsername: keycloakAdmin, adminPassword: keycloakAdminPassword)
     .WithImageTag("26.8.0")
     .WithBindMount(Path.Combine(themeDirectory, "city-picks.jar"), "/opt/keycloak/providers/city-picks.jar", isReadOnly: true)
-    .WithBindMount(emailProviderJar, "/opt/keycloak/providers/keycloak-email-webhook-provider.jar", isReadOnly: true)
     .WithEnvironment("KC_SPI_EMAIL_TEMPLATE__PROVIDER", emailMode == "webhook" ? "json" : "freemarker")
     .WithEnvironment("KC_SPI_EMAIL_SENDER__PROVIDER", emailMode == "webhook" ? "api-webhook" : "default")
-    .WithEnvironment("KEYCLOAK_EMAIL_WEBHOOK_URL", ReferenceExpression.Create($"{communication.GetEndpoint("http")}/api/keycloak-email"))
     // Keep an internal HTTP listener for config-cli; browser traffic uses HTTPS.
     .WithHttpEndpoint(targetPort: 8080, name: "config")
     .WithEnvironment("KC_DB", "postgres")
@@ -79,7 +78,12 @@ var realmIssuer = ReferenceExpression.Create($"{keycloakUrl}/realms/city-picks")
 // The URL as the browser sees it. Containers resolve plain references to the container network instead.
 keycloak.WithEnvironment("KC_HOSTNAME", keycloak.GetEndpoint("http", KnownNetworkIdentifiers.LocalhostNetwork));
 
-if (emailMode == "webhook") keycloak.WaitFor(communication);
+if (emailMode == "webhook")
+{
+    keycloak.WithBindMount(emailProviderJar, "/opt/keycloak/providers/keycloak-email-webhook-provider.jar", isReadOnly: true)
+        .WithEnvironment("KEYCLOAK_EMAIL_WEBHOOK_URL", ReferenceExpression.Create($"{communication.GetEndpoint("http")}/api/keycloak-email"))
+        .WaitFor(communication);
+}
 
 var keycloakConfig = builder.AddContainer("keycloak-config", "adorsys/keycloak-config-cli", "6.5.1-26.5.5")
     .WithBindMount(RepoPath(builder.Configuration["CityPicks:KeycloakConfigDirectory"] ?? "infra/keycloak/config"), "/config", isReadOnly: true)
