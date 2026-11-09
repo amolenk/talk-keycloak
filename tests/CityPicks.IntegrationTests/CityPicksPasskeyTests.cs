@@ -44,10 +44,10 @@ public sealed class CityPicksPasskeyTests(CityPicksStackFixture fixture)
             await Assertions.Expect(page.Locator("html.city-picks-login")).ToBeVisibleAsync();
             await page.SetViewportSizeAsync(390, 844);
             Assert.False(await page.EvaluateAsync<bool>("() => document.documentElement.scrollWidth > document.documentElement.clientWidth"));
-            await page.Locator("#username").FillAsync("traveler");
+            await page.Locator("#username").FillAsync("visitor");
             await page.Locator("#password").FillAsync("demo");
             await page.Locator("#kc-login").ClickAsync();
-            await Assertions.Expect(page.Locator("#api-identity")).ToContainTextAsync("traveler");
+            await Assertions.Expect(page.Locator("#api-identity")).ToContainTextAsync("visitor");
         }
         finally
         {
@@ -61,7 +61,7 @@ public sealed class CityPicksPasskeyTests(CityPicksStackFixture fixture)
     public async Task BrandedExplicitPasskeyReturnsToSameFavouriteAndSurvivesDisableAndReenable()
     {
         using var admin = await fixture.CreateAdminClientAsync();
-        var users = await admin.GetFromJsonAsync<JsonArray>("/admin/realms/city-picks/users?username=traveler&exact=true");
+        var users = await admin.GetFromJsonAsync<JsonArray>("/admin/realms/city-picks/users?username=visitor&exact=true");
         var id = users![0]!["id"]!.GetValue<string>();
         var page = await fixture.NewPageAsync();
         // The virtual authenticator auto-selects conditional requests without a
@@ -84,7 +84,7 @@ public sealed class CityPicksPasskeyTests(CityPicksStackFixture fixture)
         string? token = null;
         try
         {
-            token = await fixture.SignInAndGetApiTestTokenAsync(page, "traveler");
+            token = await fixture.SignInAndGetApiTestTokenAsync(page, "visitor");
             await RemoveFavouriteAsync(token);
             var identity = await page.Locator("#api-identity").InnerTextAsync();
             var permissions = await page.Locator("#permissions").InnerTextAsync();
@@ -151,7 +151,7 @@ public sealed class CityPicksPasskeyTests(CityPicksStackFixture fixture)
             await LogoutAsync(page);
             await StartLoginAsync(page);
             await Assertions.Expect(page.Locator("#authenticateWebAuthnButton")).ToHaveCountAsync(0);
-            await page.Locator("#username").FillAsync("traveler");
+            await page.Locator("#username").FillAsync("visitor");
             await page.Locator("#password").FillAsync("demo");
             await page.Locator("#kc-login").ClickAsync();
             await AssertContinuityAsync(page, identity, permissions);
@@ -170,7 +170,7 @@ public sealed class CityPicksPasskeyTests(CityPicksStackFixture fixture)
             await page.Locator("#authenticateWebAuthnButton").ClickAsync();
             await Assertions.Expect(page.Locator("#kc-form-login")).ToBeVisibleAsync();
             await Assertions.Expect(page.Locator(".alert-error")).ToBeVisibleAsync();
-            await page.Locator("#username").FillAsync("traveler");
+            await page.Locator("#username").FillAsync("visitor");
             await page.Locator("#password").FillAsync("demo");
             await page.Locator("#kc-login").ClickAsync();
             await AssertContinuityAsync(page, identity, permissions);
@@ -233,7 +233,7 @@ public sealed class CityPicksPasskeyTests(CityPicksStackFixture fixture)
     {
         await StartLoginAsync(page);
         await page.Locator("#authenticateWebAuthnButton").ClickAsync();
-        await Assertions.Expect(page.Locator("#api-identity")).ToContainTextAsync("traveler");
+        await Assertions.Expect(page.Locator("#api-identity")).ToContainTextAsync("visitor");
     }
 
     private async Task LogoutAsync(IPage page)
@@ -272,7 +272,7 @@ public sealed class CityPicksPasskeyTests(CityPicksStackFixture fixture)
             var enrollment = actions!.Single(action => action!["alias"]!.GetValue<string>() == "webauthn-register-passwordless")!;
             Assert.True(enrollment["enabled"]!.GetValue<bool>());
             Assert.False(enrollment["defaultAction"]!.GetValue<bool>());
-            foreach (var username in new[] { "traveler", "curator" })
+            foreach (var username in new[] { "visitor", "curator" })
             {
                 var users = await admin.GetFromJsonAsync<JsonArray>($"/admin/realms/city-picks/users?username={username}&exact=true");
                 Assert.Empty(users![0]!["requiredActions"]!.AsArray());
@@ -280,7 +280,7 @@ public sealed class CityPicksPasskeyTests(CityPicksStackFixture fixture)
             var page = await fixture.NewPageAsync();
             try
             {
-                await fixture.SignInAndGetApiTestTokenAsync(page, "traveler");
+                await fixture.SignInAndGetApiTestTokenAsync(page, "visitor");
                 await page.GotoAsync($"{fixture.KeycloakUrl}/realms/city-picks/account/account-security/signing-in");
                 await Assertions.Expect(page.GetByRole(AriaRole.Heading, new() { Name = "Signing in", Exact = true })).ToBeVisibleAsync();
                 await Assertions.Expect(page.GetByRole(AriaRole.Button, new() { Name = "Set up Passkey" })).ToBeVisibleAsync();

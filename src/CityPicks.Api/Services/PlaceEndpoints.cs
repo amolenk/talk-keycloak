@@ -5,9 +5,8 @@ namespace CityPicks.Api.Services;
 
 public static class PlaceEndpoints
 {
-    // Live authorization edit: replace "DenyManagement" with "CanManagePlaces".
     // Both mutations and the permission view use this exact policy.
-    public const string ManagementPolicy = "DenyManagement";
+    public const string ManagementPolicy = "CanManagePlaces";
 
     public static void MapPlaceManagement(this WebApplication app)
     {

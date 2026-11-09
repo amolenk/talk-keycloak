@@ -10,7 +10,7 @@ public sealed class CityPicksAuthorizationDemoTests(CityPicksStackFixture fixtur
     // The authorization contract after enabling CanManagePlaces in demo 2.
     [Theory]
     [InlineData(null, 401)]
-    [InlineData("traveler", 403)]
+    [InlineData("visitor", 403)]
     [InlineData("curator", 200)]
     public async Task UpdatingAPlaceRequiresACuratorSession(string? username, int expectedStatus)
     {

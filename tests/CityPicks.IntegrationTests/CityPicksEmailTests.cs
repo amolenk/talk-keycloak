@@ -14,7 +14,7 @@ public sealed partial class CityPicksEmailTests(CityPicksStackFixture fixture)
     {
         var username = $"email-reset-{Guid.NewGuid():N}";
         var recipient = $"{username}@example.test";
-        var id = await fixture.CreateTestUserAsync(username, "traveler");
+        var id = await fixture.CreateTestUserAsync(username, "visitor");
         var page = await fixture.NewPageAsync();
         try
         {
@@ -61,7 +61,7 @@ public sealed partial class CityPicksEmailTests(CityPicksStackFixture fixture)
     public async Task WebhookPasswordResetDeliversThroughCommunicationApiAndPropagatesDeliveryFailure()
     {
         var username = $"webhook-reset-{Guid.NewGuid():N}";
-        var id = await fixture.CreateTestUserAsync(username, "traveler");
+        var id = await fixture.CreateTestUserAsync(username, "visitor");
         var page = await fixture.NewPageAsync();
         try
         {
@@ -148,8 +148,8 @@ public sealed partial class CityPicksEmailTests(CityPicksStackFixture fixture)
     {
         var stockUser = $"email-stock-{Guid.NewGuid():N}";
         var brandedUser = $"email-branded-{Guid.NewGuid():N}";
-        var stockId = await fixture.CreateTestUserAsync(stockUser, "traveler");
-        var brandedId = await fixture.CreateTestUserAsync(brandedUser, "traveler");
+        var stockId = await fixture.CreateTestUserAsync(stockUser, "visitor");
+        var brandedId = await fixture.CreateTestUserAsync(brandedUser, "visitor");
         try
         {
             await SendUpdatePasswordEmailAsync(stockId);

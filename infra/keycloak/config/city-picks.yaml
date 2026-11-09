@@ -6,7 +6,7 @@ registrationAllowed: false
 loginWithEmailAllowed: true
 rememberMe: false
 verifyEmail: false
-resetPasswordAllowed: true
+resetPasswordAllowed: false
 accessTokenLifespan: 300
 ssoSessionIdleTimeout: 1800
 ssoSessionMaxLifespan: 36000
@@ -50,14 +50,14 @@ defaultRole:
   name: default-roles-city-picks
 roles:
   realm:
-    - name: traveler
+    - name: visitor
       composite: false
     - name: curator
       composite: false
     - name: default-roles-city-picks
       composite: true
       composites:
-        realm: [traveler]
+        realm: [visitor]
         client:
           account: [manage-account, view-profile]
 clients:
@@ -95,24 +95,24 @@ clients:
         protocol: openid-connect
         protocolMapper: oidc-audience-mapper
         config:
-          included.custom.audience: city-picks-api
+          included.custom.audience: places-api
           access.token.claim: "true"
           id.token.claim: "false"
 scopeMappings:
   - client: city-picks-bff
-    roles: [traveler, curator]
+    roles: [visitor, curator]
 users:
-  - username: traveler
+  - username: visitor
     enabled: true
     emailVerified: true
     firstName: Taylor
-    lastName: Traveler
-    email: traveler@example.test
+    lastName: Visitor
+    email: visitor@example.test
     credentials:
       - type: password
-        value: "$(env:CITYPICKS_TRAVELER_PASSWORD)"
+        value: "$(env:CITYPICKS_VISITOR_PASSWORD)"
         temporary: false
-    realmRoles: [traveler]
+    realmRoles: [visitor]
     clientRoles:
       account: [manage-account, view-profile]
   - username: curator
@@ -125,6 +125,6 @@ users:
       - type: password
         value: "$(env:CITYPICKS_CURATOR_PASSWORD)"
         temporary: false
-    realmRoles: [traveler, curator]
+    realmRoles: [visitor, curator]
     clientRoles:
       account: [manage-account, view-profile]

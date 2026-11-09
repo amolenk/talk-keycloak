@@ -7,7 +7,7 @@ var databaseUser = builder.AddParameter("citypicks-db-user", "citypicks");
 var keycloakDatabasePassword = builder.AddParameter("keycloak-db-password", "demo", secret: true);
 var keycloakAdminPassword = builder.AddParameter("keycloak-admin-password", "demo", secret: true);
 var keycloakAdmin = builder.AddParameter("keycloak-admin", "admin");
-var travelerPassword = builder.AddParameter("traveler-password", "demo", secret: true);
+var visitorPassword = builder.AddParameter("visitor-password", "demo", secret: true);
 var curatorPassword = builder.AddParameter("curator-password", "demo", secret: true);
 var bffSecret = builder.AddParameter("bff-client-secret", "city-picks-local-demo", secret: true);
 
@@ -97,7 +97,7 @@ var keycloakConfig = builder.AddContainer("keycloak-config", "adorsys/keycloak-c
     .WithEnvironment("IMPORT_MANAGED_ROLE", "no-delete")
     .WithEnvironment("IMPORT_MANAGED_GROUP", "no-delete")
     .WithEnvironment("IMPORT_BEHAVIORS_REMOVEDEFAULTROLEFROMUSER", "true")
-    .WithEnvironment("CITYPICKS_TRAVELER_PASSWORD", travelerPassword)
+    .WithEnvironment("CITYPICKS_VISITOR_PASSWORD", visitorPassword)
     .WithEnvironment("CITYPICKS_CURATOR_PASSWORD", curatorPassword)
     .WithEnvironment("CITYPICKS_BFF_SECRET", bffSecret)
     // Keycloak connects to Mailpit over the container network, so pass the container-side address.

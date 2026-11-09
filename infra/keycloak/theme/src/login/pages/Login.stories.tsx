@@ -20,7 +20,7 @@ export const WithInvalidCredentials: Story = {
     render: () => (
         <KcPageStory
             kcContext={{
-                login: { username: "traveler" },
+                login: { username: "visitor" },
                 messagesPerField: {
                     existsError: (fieldName: string, ...otherFieldNames: string[]) =>
                         [fieldName, ...otherFieldNames].some(name => name === "username" || name === "password"),

@@ -63,7 +63,7 @@ public sealed class CityPicksIdentityTests(CityPicksStackFixture fixture)
                 await page.GotoAsync($"{fixture.KeycloakUrl}/realms/city-picks/protocol/openid-connect/auth?client_id=city-picks-bff&redirect_uri={redirect}&response_type=code&scope=openid&code_challenge={challenge}&code_challenge_method=S256");
                 await Assertions.Expect(page.Locator("#username")).ToBeVisibleAsync(new() { Timeout = 2000 });
                 await page.GotoAsync(fixture.BffUrl);
-                await SignInAndGetApiTestTokenAsync(page, "traveler");
+                await SignInAndGetApiTestTokenAsync(page, "visitor");
             }
             finally { await page.Context.CloseAsync(); }
         }
@@ -101,14 +101,14 @@ public sealed class CityPicksIdentityTests(CityPicksStackFixture fixture)
             };
             await page.GotoAsync($"{fixture.BffUrl}/places/charles-bridge");
             await page.GetByRole(AriaRole.Button, new() { Name = "Sign in to save favourites" }).ClickAsync(new() { Timeout = 10000 });
-            await page.Locator("#username").FillAsync("traveler");
+            await page.Locator("#username").FillAsync("visitor");
             await page.Locator("#password").FillAsync("demo");
             await page.Locator("#kc-login").ClickAsync();
             await Assertions.Expect(page.Locator("h1")).ToHaveTextAsync("Charles Bridge");
             await Assertions.Expect(page.GetByRole(AriaRole.Button, new() { Name = "Sign out", Exact = true })).ToBeVisibleAsync();
             await page.GetByRole(AriaRole.Link, new() { Name = "Your identity", Exact = true }).ClickAsync();
-            await Assertions.Expect(page.Locator("#api-identity")).ToContainTextAsync("traveler");
-            await Assertions.Expect(page.Locator("#browser-identity")).ToContainTextAsync("traveler");
+            await Assertions.Expect(page.Locator("#api-identity")).ToContainTextAsync("visitor");
+            await Assertions.Expect(page.Locator("#browser-identity")).ToContainTextAsync("visitor");
             await Assertions.Expect(page.Locator("#permissions")).ToContainTextAsync("Management: Denied");
             Assert.True(usedS256, "The actual browser authorization request must use Code/S256 PKCE.");
         }
@@ -116,8 +116,8 @@ public sealed class CityPicksIdentityTests(CityPicksStackFixture fixture)
     }
 
     [Theory]
-    [InlineData("traveler", true, "traveler")]
-    [InlineData("curator", true, "curator,traveler")]
+    [InlineData("visitor", true, "visitor")]
+    [InlineData("curator", true, "curator,visitor")]
     public async Task BrowserSessionAndIndependentApiTokensExposeOwnRolesAndEnforceManagementPolicy(string username, bool favourites, string roles)
     {
         var page = await fixture.NewPageAsync();
@@ -157,7 +157,7 @@ public sealed class CityPicksIdentityTests(CityPicksStackFixture fixture)
             if (captureDirectory is not null)
             {
                 Directory.CreateDirectory(captureDirectory);
-                var name = $"profile-{username}-{(favourites ? "traveler" : "no-favourites")}";
+                var name = $"profile-{username}-{(favourites ? "visitor" : "no-favourites")}";
                 await page.SetViewportSizeAsync(1440, 1000);
                 await page.ScreenshotAsync(new() { Path = Path.Combine(captureDirectory, $"{name}-desktop.png"), FullPage = true });
                 await page.SetViewportSizeAsync(390, 844);
@@ -198,7 +198,7 @@ public sealed class CityPicksIdentityTests(CityPicksStackFixture fixture)
         var page = await fixture.NewPageAsync();
         try
         {
-            await SignInAndGetApiTestTokenAsync(page, "traveler");
+            await SignInAndGetApiTestTokenAsync(page, "visitor");
             var callback = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
             page.Request += (_, request) =>
             {
@@ -215,7 +215,7 @@ public sealed class CityPicksIdentityTests(CityPicksStackFixture fixture)
     }
 
     [Theory]
-    [InlineData("traveler")]
+    [InlineData("visitor")]
     [InlineData("curator")]
     public async Task PreparedUsersCanOpenStockAccountConsole(string username)
     {
@@ -229,7 +229,7 @@ public sealed class CityPicksIdentityTests(CityPicksStackFixture fixture)
     }
 
     [Fact]
-    public async Task RegistrationGrantsOnlyTravelerAndEnablesAccountConsole()
+    public async Task RegistrationGrantsOnlyVisitorAndEnablesAccountConsole()
     {
         var page = await fixture.NewPageAsync();
         var username = $"registered-{Guid.NewGuid():N}";
@@ -241,12 +241,12 @@ public sealed class CityPicksIdentityTests(CityPicksStackFixture fixture)
             await page.Locator("#username").FillAsync(username);
             await page.Locator("#email").FillAsync($"{username}@example.test");
             await page.Locator("#firstName").FillAsync("New");
-            await page.Locator("#lastName").FillAsync("Traveler");
+            await page.Locator("#lastName").FillAsync("Visitor");
             await page.Locator("#password").FillAsync("demo");
             await page.Locator("#password-confirm").FillAsync("demo");
             await page.GetByRole(AriaRole.Button, new() { Name = "Register", Exact = true }).ClickAsync();
             await Assertions.Expect(page.Locator("#api-identity")).ToContainTextAsync(username);
-            await Assertions.Expect(page.Locator("#api-identity dd").Last).ToHaveTextAsync("traveler");
+            await Assertions.Expect(page.Locator("#api-identity dd").Last).ToHaveTextAsync("visitor");
             await Assertions.Expect(page.Locator("#permissions")).ToContainTextAsync("Favourites: Allowed");
             await Assertions.Expect(page.Locator("#permissions")).ToContainTextAsync("Management: Denied");
             await VerifyAccountConsoleAsync(page, username);
@@ -261,7 +261,7 @@ public sealed class CityPicksIdentityTests(CityPicksStackFixture fixture)
     public async Task MissingOptionalClaimsAreNotInventedAndUnrelatedRolesStayOut()
     {
         var username = $"sparse-{Guid.NewGuid():N}";
-        var id = await fixture.CreateTestUserAsync(username, "traveler");
+        var id = await fixture.CreateTestUserAsync(username, "visitor");
         using var admin = await fixture.CreateAdminClientAsync();
         var user = (await admin.GetFromJsonAsync<JsonObject>($"/admin/realms/city-picks/users/{id}"))!;
         var profile = await admin.GetFromJsonAsync<JsonObject>("/admin/realms/city-picks/users/profile");
@@ -292,7 +292,7 @@ public sealed class CityPicksIdentityTests(CityPicksStackFixture fixture)
                 {
                     await Assertions.Expect(page.Locator($"{panel} dd").Nth(0)).ToHaveTextAsync("Not provided");
                     await Assertions.Expect(page.Locator($"{panel} dd").Nth(4)).ToHaveTextAsync("Not provided");
-                    await Assertions.Expect(page.Locator($"{panel} dd").Last).ToHaveTextAsync("traveler");
+                    await Assertions.Expect(page.Locator($"{panel} dd").Last).ToHaveTextAsync("visitor");
                 }
                 await page.SetViewportSizeAsync(390, 844);
                 Assert.False(await page.EvaluateAsync<bool>("() => document.documentElement.scrollWidth > document.documentElement.clientWidth"));
@@ -336,7 +336,7 @@ public sealed class CityPicksIdentityTests(CityPicksStackFixture fixture)
                 var token = await ObtainPkceTokenAsync(page, clientId);
                 var jwt = new JsonWebToken(token);
                 Assert.Equal($"{fixture.KeycloakUrl}/realms/city-picks", jwt.Issuer);
-                Assert.Equal(kind == "wrong-audience" ? "another-api" : "city-picks-api", Assert.Single(jwt.Audiences));
+                Assert.Equal(kind == "wrong-audience" ? "another-api" : "places-api", Assert.Single(jwt.Audiences));
                 using var keysClient = new HttpClient();
                 var keys = new JsonWebKeySet(await keysClient.GetStringAsync($"{fixture.KeycloakUrl}/realms/city-picks/protocol/openid-connect/certs"));
                 var validation = await new JsonWebTokenHandler().ValidateTokenAsync(token, new TokenValidationParameters
@@ -364,7 +364,7 @@ public sealed class CityPicksIdentityTests(CityPicksStackFixture fixture)
         var page = await fixture.NewPageAsync();
         try
         {
-            var token = await SignInAndGetApiTestTokenAsync(page, "traveler");
+            var token = await SignInAndGetApiTestTokenAsync(page, "visitor");
             var parts = token.Split('.');
             var signature = Base64UrlEncoder.DecodeBytes(parts[2]);
             signature[0] ^= 1;
@@ -401,7 +401,7 @@ public sealed class CityPicksIdentityTests(CityPicksStackFixture fixture)
             var keyId = keys.Keys.Single(key => key.N == publicModulus).KeyId;
             var token = new JsonWebTokenHandler().CreateToken(new SecurityTokenDescriptor
             {
-                Issuer = "https://unrelated.example.test/realms/other", Audience = "city-picks-api",
+                Issuer = "https://unrelated.example.test/realms/other", Audience = "places-api",
                 Claims = new Dictionary<string, object> { ["sub"] = "invalid-issuer-fixture" },
                 Expires = DateTime.UtcNow.AddMinutes(5),
                 SigningCredentials = new SigningCredentials(new RsaSecurityKey(rsa) { KeyId = keyId }, SecurityAlgorithms.RsaSha256)
@@ -409,7 +409,7 @@ public sealed class CityPicksIdentityTests(CityPicksStackFixture fixture)
             var validation = await new JsonWebTokenHandler().ValidateTokenAsync(token, new TokenValidationParameters
             {
                 IssuerSigningKeys = keys.GetSigningKeys(), ValidateIssuer = false,
-                ValidAudience = "city-picks-api", ValidateLifetime = true, ClockSkew = TimeSpan.Zero
+                ValidAudience = "places-api", ValidateLifetime = true, ClockSkew = TimeSpan.Zero
             });
             Assert.True(validation.IsValid, "The wrong-issuer fixture must have a trusted signature, valid audience and lifetime.");
             await AssertUnauthorizedAsync(token);
@@ -430,12 +430,12 @@ public sealed class CityPicksIdentityTests(CityPicksStackFixture fixture)
     }
 
     [Fact]
-    public async Task CuratorRoleDoesNotImplicitlyGrantTraveler()
+    public async Task CuratorRoleDoesNotImplicitlyGrantVisitor()
     {
         using var admin = await fixture.CreateAdminClientAsync();
         var users = await admin.GetFromJsonAsync<JsonArray>("/admin/realms/city-picks/users?username=curator&exact=true");
         var id = users![0]!["id"]!.GetValue<string>();
-        var role = await admin.GetFromJsonAsync<JsonObject>("/admin/realms/city-picks/roles/traveler");
+        var role = await admin.GetFromJsonAsync<JsonObject>("/admin/realms/city-picks/roles/visitor");
         using var removeRequest = new HttpRequestMessage(HttpMethod.Delete, $"/admin/realms/city-picks/users/{id}/role-mappings/realm") { Content = JsonContent.Create(new[] { role }) };
         using var remove = await admin.SendAsync(removeRequest);
         remove.EnsureSuccessStatusCode();
@@ -462,7 +462,7 @@ public sealed class CityPicksIdentityTests(CityPicksStackFixture fixture)
             else code.TrySetException(new InvalidOperationException("PKCE callback did not contain the expected state and authorization code."));
         };
         await page.GotoAsync($"{fixture.KeycloakUrl}/realms/city-picks/protocol/openid-connect/auth?client_id={clientId}&redirect_uri={Uri.EscapeDataString(redirect)}&response_type=code&scope=openid%20profile%20email&state={state}&code_challenge={challenge}&code_challenge_method=S256");
-        await page.Locator("#username").FillAsync("traveler");
+        await page.Locator("#username").FillAsync("visitor");
         await page.Locator("#password").FillAsync("demo");
         await page.Locator("#kc-login").ClickAsync();
         using var http = new HttpClient();

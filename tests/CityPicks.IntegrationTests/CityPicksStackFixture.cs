@@ -261,7 +261,7 @@ public sealed class CityPicksStackFixture : IAsyncLifetime
         using var create = await admin.PostAsJsonAsync("/admin/realms/city-picks/users", new
         {
             username, enabled = true, emailVerified = true, email = $"{username}@example.test",
-            firstName = "Test", lastName = "Traveler",
+            firstName = "Test", lastName = "Visitor",
             credentials = new[] { new { type = "password", value = DemoPassword, temporary = false } }
         });
         create.EnsureSuccessStatusCode();

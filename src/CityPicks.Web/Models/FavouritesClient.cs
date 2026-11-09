@@ -4,7 +4,7 @@ namespace CityPicks.Web.Models;
 
 public sealed class FavouritesClient(IHttpClientFactory clients)
 {
-    public const string MissingTraveler = "Favourites require the traveler role. You're signed in, but this account doesn't have that permission. If your roles have changed, sign out and sign in again.";
+    public const string MissingVisitor = "Favourites require the visitor role. You're signed in, but this account doesn't have that permission. If your roles have changed, sign out and sign in again.";
     public const string SessionEnded = "Your session has ended. Sign out and sign in again to use favourites.";
 
     public async Task<PlaceView[]> GetAsync() =>

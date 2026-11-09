@@ -15,7 +15,7 @@ public sealed class CityPicksBffTests(CityPicksStackFixture fixture)
         var page = await fixture.NewPageAsync();
         try
         {
-            await fixture.SignInAndGetApiTestTokenAsync(page, "traveler");
+            await fixture.SignInAndGetApiTestTokenAsync(page, "visitor");
             await page.RouteAsync("**/api/identity", route => route.FulfillAsync(new() { Status = 401 }));
             await page.ReloadAsync();
             await Assertions.Expect(page.GetByRole(AriaRole.Button, new() { Name = "Sign out", Exact = true })).ToHaveCountAsync(0);
@@ -32,7 +32,7 @@ public sealed class CityPicksBffTests(CityPicksStackFixture fixture)
         var page = await fixture.NewPageAsync();
         try
         {
-            await fixture.SignInAndGetApiTestTokenAsync(page, "traveler");
+            await fixture.SignInAndGetApiTestTokenAsync(page, "visitor");
             await page.RouteAsync("**/auth/user", route => route.FulfillAsync(new() { Status = 503 }));
             await page.GotoAsync(fixture.BffUrl + "/" + path);
             await Assertions.Expect(page.GetByRole(AriaRole.Alert)).ToContainTextAsync("session could not be checked");
@@ -40,7 +40,7 @@ public sealed class CityPicksBffTests(CityPicksStackFixture fixture)
             await page.GetByRole(AriaRole.Button, new() { Name = "Retry session check" }).ClickAsync();
             await Assertions.Expect(page.GetByRole(AriaRole.Alert)).ToHaveCountAsync(0);
             await Assertions.Expect(page.GetByRole(AriaRole.Button, new() { Name = "Sign out", Exact = true })).ToBeVisibleAsync();
-            if (path == "profile") await Assertions.Expect(page.Locator("#api-identity")).ToContainTextAsync("traveler");
+            if (path == "profile") await Assertions.Expect(page.Locator("#api-identity")).ToContainTextAsync("visitor");
             else await Assertions.Expect(page.GetByText("Loading your favourites…", new() { Exact = true })).ToHaveCountAsync(0);
         }
         finally { await page.Context.CloseAsync(); }
@@ -54,7 +54,7 @@ public sealed class CityPicksBffTests(CityPicksStackFixture fixture)
         page.Request += (_, request) => requests.Add(request);
         try
         {
-            await fixture.SignInAndGetApiTestTokenAsync(page, "traveler");
+            await fixture.SignInAndGetApiTestTokenAsync(page, "visitor");
             var browserApiRequests = requests.Where(r => new Uri(r.Url).AbsolutePath.StartsWith("/api/", StringComparison.Ordinal)).ToArray();
             Assert.NotEmpty(browserApiRequests);
             Assert.All(browserApiRequests, r => Assert.False(r.Headers.ContainsKey("authorization")));
@@ -86,7 +86,7 @@ public sealed class CityPicksBffTests(CityPicksStackFixture fixture)
         var page = await fixture.NewPageAsync();
         try
         {
-            var token = await fixture.SignInAndGetApiTestTokenAsync(page, "traveler");
+            var token = await fixture.SignInAndGetApiTestTokenAsync(page, "visitor");
             foreach (var path in new[] { "/api/favourites/charles-bridge", "/api/places/charles-bridge", "/auth/logout" })
             {
                 using var request = new HttpRequestMessage(path == "/auth/logout" ? HttpMethod.Post : HttpMethod.Put, path);
@@ -118,10 +118,10 @@ public sealed class CityPicksBffTests(CityPicksStackFixture fixture)
         var page = await fixture.NewPageAsync();
         try
         {
-            await fixture.SignInAndGetApiTestTokenAsync(page, "traveler");
+            await fixture.SignInAndGetApiTestTokenAsync(page, "visitor");
             await Task.Delay(TimeSpan.FromSeconds(7));
             await page.ReloadAsync();
-            await Assertions.Expect(page.Locator("#api-identity")).ToContainTextAsync("traveler");
+            await Assertions.Expect(page.Locator("#api-identity")).ToContainTextAsync("visitor");
             await Assertions.Expect(page.Locator("#api-identity [role=alert]")).ToHaveCountAsync(0);
         }
         finally

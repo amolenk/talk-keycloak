@@ -12,16 +12,16 @@ namespace CityPicks.IntegrationTests;
 public sealed class CityPicksFavouritesTests(CityPicksStackFixture fixture)
 {
     [Fact]
-    public async Task ASecondTravelerCannotListOrRemoveAnotherAccountsFavouritesOrChooseAnOwner()
+    public async Task ASecondVisitorCannotListOrRemoveAnotherAccountsFavouritesOrChooseAnOwner()
     {
         var username = $"second-{Guid.NewGuid():N}";
-        var id = await fixture.CreateTestUserAsync(username, "traveler");
+        var id = await fixture.CreateTestUserAsync(username, "visitor");
         var firstPage = await fixture.NewPageAsync();
         var secondPage = await fixture.NewPageAsync();
         string? firstToken = null;
         try
         {
-            firstToken = await fixture.SignInAndGetApiTestTokenAsync(firstPage, "traveler");
+            firstToken = await fixture.SignInAndGetApiTestTokenAsync(firstPage, "visitor");
             var secondToken = await fixture.SignInAndGetApiTestTokenAsync(secondPage, username);
             await ExpectStatusAsync(HttpMethod.Put, "/api/favourites/charles-bridge", firstToken, HttpStatusCode.NoContent);
             Assert.Empty(await ListAsync(secondToken));
@@ -61,7 +61,7 @@ public sealed class CityPicksFavouritesTests(CityPicksStackFixture fixture)
     public async Task FavouritesPersistThroughLogoutProfileAndRoleChangesButNotAccountRecreation()
     {
         var username = $"continuity-{Guid.NewGuid():N}";
-        var id = await fixture.CreateTestUserAsync(username, "traveler");
+        var id = await fixture.CreateTestUserAsync(username, "visitor");
         var page = await fixture.NewPageAsync();
         try
         {
@@ -110,11 +110,11 @@ public sealed class CityPicksFavouritesTests(CityPicksStackFixture fixture)
             foreach (var method in new[] { HttpMethod.Get, HttpMethod.Put, HttpMethod.Delete })
                 await ExpectStatusAsync(method, method == HttpMethod.Get ? "/api/favourites" : "/api/favourites/old-town-square", withoutRole, HttpStatusCode.Forbidden);
             await page.GotoAsync($"{fixture.BffUrl}/favourites");
-            await Assertions.Expect(page.Locator("main")).ToContainTextAsync("Favourites require the traveler role");
+            await Assertions.Expect(page.Locator("main")).ToContainTextAsync("Favourites require the visitor role");
             Assert.Equal("old-town-square", Assert.Single(await ListAsync(token)).Id); // Previously issued tokens aren't immediately revoked.
             await page.Context.CloseAsync();
 
-            await fixture.SetTestUserRolesAsync(id, "traveler");
+            await fixture.SetTestUserRolesAsync(id, "visitor");
             page = await fixture.NewPageAsync();
             token = await fixture.SignInAndGetApiTestTokenAsync(page, username);
             Assert.Equal("old-town-square", Assert.Single(await ListAsync(token)).Id);
@@ -122,7 +122,7 @@ public sealed class CityPicksFavouritesTests(CityPicksStackFixture fixture)
 
             var originalId = id;
             await fixture.DeleteTestUserAsync(id);
-            id = await fixture.CreateTestUserAsync(username, "traveler");
+            id = await fixture.CreateTestUserAsync(username, "visitor");
             Assert.NotEqual(originalId, id);
             page = await fixture.NewPageAsync();
             token = await fixture.SignInAndGetApiTestTokenAsync(page, username);
@@ -135,7 +135,7 @@ public sealed class CityPicksFavouritesTests(CityPicksStackFixture fixture)
 
     [Theory]
     [InlineData("curator-only")]
-    public async Task AnonymousAndAuthenticatedNonTravelersCannotUseFavourites(string account)
+    public async Task AnonymousAndAuthenticatedNonVisitorsCannotUseFavourites(string account)
     {
         foreach (var method in new[] { HttpMethod.Get, HttpMethod.Put, HttpMethod.Delete })
             await ExpectStatusAsync(method, method == HttpMethod.Get ? "/api/favourites" : "/api/favourites/charles-bridge", null, HttpStatusCode.Unauthorized);
@@ -155,7 +155,7 @@ public sealed class CityPicksFavouritesTests(CityPicksStackFixture fixture)
             foreach (var path in new[] { "/favourites", "/places/charles-bridge" })
             {
                 await page.GotoAsync(fixture.BffUrl + path);
-                await Assertions.Expect(page.Locator("main")).ToContainTextAsync("Favourites require the traveler role");
+                await Assertions.Expect(page.Locator("main")).ToContainTextAsync("Favourites require the visitor role");
                 await Assertions.Expect(page.GetByRole(AriaRole.Button, new() { Name = "Save to favourites", Exact = true })).ToHaveCountAsync(0);
             }
         }
@@ -172,7 +172,7 @@ public sealed class CityPicksFavouritesTests(CityPicksStackFixture fixture)
             await Assertions.Expect(page.Locator("main")).ToContainTextAsync("Sign in to see your private favourites");
             await page.GotoAsync($"{fixture.BffUrl}/places/charles-bridge");
             await page.GetByRole(AriaRole.Button, new() { Name = "Sign in to save favourites" }).ClickAsync();
-            await page.Locator("#username").FillAsync("traveler");
+            await page.Locator("#username").FillAsync("visitor");
             await page.Locator("#password").FillAsync("demo");
             await page.Locator("#kc-login").ClickAsync();
             await Assertions.Expect(page.Locator("h1")).ToHaveTextAsync("Charles Bridge");
@@ -212,7 +212,7 @@ public sealed class CityPicksFavouritesTests(CityPicksStackFixture fixture)
     }
 
     [Theory]
-    [InlineData("traveler")]
+    [InlineData("visitor")]
     [InlineData("curator")]
     public async Task ExplicitSaveIsIdempotentAndAbsentRemovalIsHarmless(string username)
     {

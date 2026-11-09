@@ -65,7 +65,7 @@ public sealed class CityPicksBrandingTests(CityPicksStackFixture fixture)
         {
             await page.GotoAsync($"{fixture.BffUrl}/profile");
             await page.GetByRole(AriaRole.Button, new() { Name = "Sign in", Exact = true }).Last.ClickAsync();
-            await page.Locator("#username").FillAsync("traveler");
+            await page.Locator("#username").FillAsync("visitor");
             await page.Locator("#password").FillAsync("incorrect-password");
             await page.Locator("#kc-login").ClickAsync();
             await Assertions.Expect(page.Locator("#input-error")).ToContainTextAsync("Invalid username or password");
@@ -79,7 +79,7 @@ public sealed class CityPicksBrandingTests(CityPicksStackFixture fixture)
             await page.GetByRole(AriaRole.Link, new() { Name = "Register", Exact = true }).ClickAsync();
             await CaptureAsync(page, "registration");
             // Use the same real registration and stock Account Console assertions as baseline.
-            await new CityPicksIdentityTests(fixture).RegistrationGrantsOnlyTravelerAndEnablesAccountConsole();
+            await new CityPicksIdentityTests(fixture).RegistrationGrantsOnlyVisitorAndEnablesAccountConsole();
 
             // Server-generated protocol error, not a mock context.
             await page.GotoAsync($"{fixture.KeycloakUrl}/realms/city-picks/protocol/openid-connect/auth?client_id=city-picks-bff&redirect_uri=https%3A%2F%2Finvalid.example.test&response_type=code");
@@ -87,7 +87,7 @@ public sealed class CityPicksBrandingTests(CityPicksStackFixture fixture)
             await CaptureAsync(page, "protocol-error");
             Assert.Empty(remoteRequests);
             await new CityPicksIdentityTests(fixture).CompleteLogoutEndsApplicationAndKeycloakSessions();
-            await new CityPicksIdentityTests(fixture).PreparedUsersCanOpenStockAccountConsole("traveler");
+            await new CityPicksIdentityTests(fixture).PreparedUsersCanOpenStockAccountConsole("visitor");
             await Assertions.Expect(page.Locator("html.city-picks-login")).ToBeVisibleAsync();
         }
         finally
@@ -101,7 +101,7 @@ public sealed class CityPicksBrandingTests(CityPicksStackFixture fixture)
     public async Task BrandedRequiredPasswordUpdateRetainsTheSuppliedActionHandler()
     {
         var username = $"theme-action-{Guid.NewGuid():N}";
-        var id = await fixture.CreateTestUserAsync(username, "traveler");
+        var id = await fixture.CreateTestUserAsync(username, "visitor");
         using var admin = await fixture.CreateAdminClientAsync();
         var page = await fixture.NewPageAsync();
         try
@@ -135,7 +135,7 @@ public sealed class CityPicksBrandingTests(CityPicksStackFixture fixture)
     public async Task ReapplyPreservesUnmanagedUserIdentityCredentialsRolesAndFavourite()
     {
         var username = $"theme-preservation-{Guid.NewGuid():N}";
-        var id = await fixture.CreateTestUserAsync(username, "traveler");
+        var id = await fixture.CreateTestUserAsync(username, "visitor");
         using var admin = await fixture.CreateAdminClientAsync();
         var credentials = (await admin.GetFromJsonAsync<JsonArray>($"/admin/realms/city-picks/users/{id}/credentials"))!.ToJsonString();
         var roles = (await admin.GetFromJsonAsync<JsonObject>($"/admin/realms/city-picks/users/{id}/role-mappings"))!.ToJsonString();

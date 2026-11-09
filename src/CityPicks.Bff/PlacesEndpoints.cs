@@ -24,7 +24,7 @@ public static class PlacesEndpoints
             var identity = await response.Content.ReadFromJsonAsync<IdentityView>(context.RequestAborted);
             if (identity is null) return Results.StatusCode(502);
             // Places owns management permission; favourites permission follows the BFF session used for enforcement.
-            return Results.Ok(identity with { Permissions = new PermissionView(context.User.IsInRole("traveler"), identity.Permissions.CanManagePlaces) });
+            return Results.Ok(identity with { Permissions = new PermissionView(context.User.IsInRole("visitor"), identity.Permissions.CanManagePlaces) });
         }
         catch (HttpRequestException) { return Results.StatusCode(502); }
     }

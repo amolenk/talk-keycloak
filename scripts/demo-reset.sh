@@ -79,11 +79,13 @@ rewrite "$realm_yaml" \
   -e 's/^loginTheme: .*/loginTheme: keycloak/' \
   -e 's/^emailTheme: .*/emailTheme: keycloak/' \
   -e 's/^displayName: .*/displayName: City Picks/' \
+  -e 's/^resetPasswordAllowed: .*/resetPasswordAllowed: false/' \
   -e 's/^webAuthnPolicyPasswordlessPasskeysEnabled: .*/webAuthnPolicyPasswordlessPasskeysEnabled: false/' \
   -e '/providerId: webauthn-register-passwordless/{n;s/enabled: .*/enabled: false/;}'
 expect_line "$realm_yaml" '^loginTheme: keycloak$' "loginTheme: keycloak"
 expect_line "$realm_yaml" '^emailTheme: keycloak$' "emailTheme: keycloak"
 expect_line "$realm_yaml" '^displayName: City Picks$' "displayName: City Picks"
+expect_line "$realm_yaml" '^resetPasswordAllowed: false$' "password reset disabled"
 expect_line "$realm_yaml" '^webAuthnPolicyPasswordlessPasskeysEnabled: false$' "passkeys disabled"
 if grep -A1 'providerId: webauthn-register-passwordless' "$realm_yaml" | grep -Eq 'enabled: false'; then
   ok "passkey registration action disabled"
@@ -91,15 +93,16 @@ else
   printf '   FAILED  passkey registration action is not disabled in %s\n' "$realm_yaml" >&2; exit 1
 fi
 
-rewrite "$policy_file" -e 's/ManagementPolicy = "[A-Za-z]*";/ManagementPolicy = "DenyManagement";/'
-expect_line "$policy_file" 'ManagementPolicy = "DenyManagement";' "ManagementPolicy = DenyManagement"
+rewrite "$policy_file" -e 's/ManagementPolicy = "[A-Za-z]*";/ManagementPolicy = "CanManagePlaces";/'
+expect_line "$policy_file" 'ManagementPolicy = "CanManagePlaces";' "ManagementPolicy = CanManagePlaces"
 
 step "Check prerequisites"
 if [[ -f infra/keycloak/theme/dist_keycloak/city-picks.jar ]]; then ok "theme JAR built"; else
   warn "theme JAR missing: run ./scripts/build-theme.sh"
 fi
 for image in postgres:17.11-bookworm quay.io/keycloak/keycloak:26.8.0 \
-  adorsys/keycloak-config-cli:6.5.1-26.5.5 axllent/mailpit:v1.31.6; do
+  adorsys/keycloak-config-cli:6.5.1-26.5.5 \
+  axllent/mailpit:v1.31.6@sha256:23fe39e81bde596a918000b3135c0f85dc8bb4c9ea6be274b051143f3e300387; do
   if docker image inspect "$image" >/dev/null 2>&1; then ok "image $image"; else
     warn "image $image not pulled: run ./scripts/prepare.sh while online"
   fi

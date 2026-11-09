@@ -64,7 +64,7 @@ builder.Services.AddAuthorization(options =>
     // Cookie challenges on browser API endpoints produce 401, never an OIDC redirect in fetch.
     options.DefaultPolicy = new AuthorizationPolicyBuilder("cookie").RequireAuthenticatedUser().Build();
     options.AddPolicy("CanUseFavourites", policy => policy.AddAuthenticationSchemes("cookie")
-        .RequireAuthenticatedUser().RequireRole("traveler"));
+        .RequireAuthenticatedUser().RequireRole("visitor"));
 });
 builder.Services.AddAntiforgery(options =>
 {

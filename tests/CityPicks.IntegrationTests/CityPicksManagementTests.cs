@@ -18,14 +18,14 @@ public sealed class CityPicksManagementTests(CityPicksStackFixture fixture)
         var username = $"curator-only-{Guid.NewGuid():N}";
         var userId = await fixture.CreateTestUserAsync(username, "curator");
         var curatorPage = await fixture.NewPageAsync();
-        var travelerPage = await fixture.NewPageAsync();
+        var visitorPage = await fixture.NewPageAsync();
         var original = (await fixture.PlacesApi.GetFromJsonAsync<PlaceView>("/api/places/charles-bridge"))!;
-        string? curatorToken = null, travelerToken = null;
+        string? curatorToken = null, visitorToken = null;
         var addedIds = new List<string>();
         try
         {
             curatorToken = await fixture.SignInAndGetApiTestTokenAsync(curatorPage, username);
-            travelerToken = await fixture.SignInAndGetApiTestTokenAsync(travelerPage, "traveler");
+            visitorToken = await fixture.SignInAndGetApiTestTokenAsync(visitorPage, "visitor");
             using var identity = await SendAsync(HttpMethod.Get, "/api/identity", curatorToken);
             var own = (await identity.Content.ReadFromJsonAsync<IdentityView>())!;
             Assert.False(own.Permissions.CanUseFavourites);
@@ -33,7 +33,7 @@ public sealed class CityPicksManagementTests(CityPicksStackFixture fixture)
             using var favouritesDenied = await SendAsync(HttpMethod.Get, "/api/favourites", curatorToken);
             Assert.Equal(HttpStatusCode.Forbidden, favouritesDenied.StatusCode);
 
-            foreach (var token in new string?[] { null, travelerToken, curatorToken })
+            foreach (var token in new string?[] { null, visitorToken, curatorToken })
             foreach (var method in new[] { HttpMethod.Post, HttpMethod.Put })
             {
                 using var response = await SendAsync(method, method == HttpMethod.Post ? "/api/places" : "/api/places/charles-bridge", token, PlaceEdit.From(original));
@@ -44,7 +44,7 @@ public sealed class CityPicksManagementTests(CityPicksStackFixture fixture)
             }
             if (!Enabled) return;
 
-            using var save = await SendAsync(HttpMethod.Put, "/api/favourites/charles-bridge", travelerToken);
+            using var save = await SendAsync(HttpMethod.Put, "/api/favourites/charles-bridge", visitorToken);
             Assert.Equal(HttpStatusCode.NoContent, save.StatusCode);
             var changed = PlaceEdit.From(original);
             changed.Description = "A curator's updated river walk.";
@@ -52,7 +52,7 @@ public sealed class CityPicksManagementTests(CityPicksStackFixture fixture)
             Assert.Equal(HttpStatusCode.OK, edit.StatusCode);
             var updated = (await edit.Content.ReadFromJsonAsync<PlaceView>())!;
             Assert.Equal(original.Id, updated.Id);
-            using var saved = await SendAsync(HttpMethod.Get, "/api/favourites", travelerToken);
+            using var saved = await SendAsync(HttpMethod.Get, "/api/favourites", visitorToken);
             var favourite = Assert.Single((await saved.Content.ReadFromJsonAsync<PlaceView[]>())!);
             Assert.Equal(original.Id, favourite.Id);
             Assert.Equal(changed.Description, favourite.Description);
@@ -103,13 +103,13 @@ public sealed class CityPicksManagementTests(CityPicksStackFixture fixture)
                 using var restore = await SendAsync(HttpMethod.Put, "/api/places/charles-bridge", curatorToken, PlaceEdit.From(original));
                 Assert.Equal(HttpStatusCode.OK, restore.StatusCode);
             }
-            if (travelerToken is not null)
+            if (visitorToken is not null)
             {
-                using var remove = await SendAsync(HttpMethod.Delete, "/api/favourites/charles-bridge", travelerToken);
+                using var remove = await SendAsync(HttpMethod.Delete, "/api/favourites/charles-bridge", visitorToken);
                 Assert.Equal(HttpStatusCode.NoContent, remove.StatusCode);
             }
             await curatorPage.Context.CloseAsync();
-            await travelerPage.Context.CloseAsync();
+            await visitorPage.Context.CloseAsync();
             await fixture.DeleteTestUserAsync(userId);
             foreach (var id in addedIds) await fixture.DeleteAddedPlaceAsync(id);
         }
@@ -208,7 +208,7 @@ public sealed class CityPicksManagementTests(CityPicksStackFixture fixture)
     }
 
     [Theory]
-    [InlineData("traveler", false)]
+    [InlineData("visitor", false)]
     [InlineData("curator", true)]
     public async Task PermissionsControlsAndRealDemoRequestsAgreeWithSourcePolicy(string username, bool curator)
     {

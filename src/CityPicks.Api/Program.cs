@@ -31,7 +31,7 @@ builder.Services.AddSingleton(catalog);
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer(options =>
 {
     options.Authority = realmIssuer;
-    options.Audience = "city-picks-api";
+    options.Audience = "places-api";
     options.MapInboundClaims = false;
     options.Events = new JwtBearerEvents
     {
@@ -45,7 +45,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJw
     options.TokenValidationParameters = new TokenValidationParameters
     {
         ValidIssuer = realmIssuer,
-        ValidAudience = "city-picks-api",
+        ValidAudience = "places-api",
         ValidateIssuer = true,
         ValidateAudience = true,
         ValidateIssuerSigningKey = true,
