@@ -140,9 +140,12 @@ if [[ "$start" == true ]]; then
 fi
 
 step "Manual"
-printf '   - Delete old localhost passkeys in Chrome (chrome://settings/passkeys or Google Password Manager)\n'
-printf '   - Close all Keycloak and City Picks tabs, so there is no lingering session\n'
-printf '   - Walk through presentation/DEMO-CHECKLIST.md\n'
+printf '   - Delete old localhost passkeys in 1Password\n'
+printf '   - Run start script for Aspire'
+printf '   - Open Aspire tab (Edge)\n'
+printf '   - Re-open City Picks tab (Edge), so there is no lingering session\n'
+printf '   - Open Storybook tab (Edge) [npm run storybook]\n'
+printf '   - Open Zed to solution folder\n'
 
 if ((${#warnings[@]} > 0)); then
   printf '\n\033[1m%d warning(s).\033[0m Fix them before going on stage.\n' "${#warnings[@]}"
