@@ -79,13 +79,13 @@ rewrite "$realm_yaml" \
   -e 's/^loginTheme: .*/loginTheme: keycloak/' \
   -e 's/^emailTheme: .*/emailTheme: keycloak/' \
   -e 's/^displayName: .*/displayName: City Picks/' \
-  -e 's/^resetPasswordAllowed: .*/resetPasswordAllowed: false/' \
+  -e 's/^resetPasswordAllowed: .*/resetPasswordAllowed: true/' \
   -e 's/^webAuthnPolicyPasswordlessPasskeysEnabled: .*/webAuthnPolicyPasswordlessPasskeysEnabled: false/' \
   -e '/providerId: webauthn-register-passwordless/{n;s/enabled: .*/enabled: false/;}'
 expect_line "$realm_yaml" '^loginTheme: keycloak$' "loginTheme: keycloak"
 expect_line "$realm_yaml" '^emailTheme: keycloak$' "emailTheme: keycloak"
 expect_line "$realm_yaml" '^displayName: City Picks$' "displayName: City Picks"
-expect_line "$realm_yaml" '^resetPasswordAllowed: false$' "password reset disabled"
+expect_line "$realm_yaml" '^resetPasswordAllowed: true$' "password reset enabled"
 expect_line "$realm_yaml" '^webAuthnPolicyPasswordlessPasskeysEnabled: false$' "passkeys disabled"
 if grep -A1 'providerId: webauthn-register-passwordless' "$realm_yaml" | grep -Eq 'enabled: false'; then
   ok "passkey registration action disabled"

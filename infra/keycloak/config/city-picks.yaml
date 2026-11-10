@@ -2,11 +2,11 @@ realm: city-picks
 enabled: true
 displayName: City Picks
 sslRequired: external
-registrationAllowed: false
+registrationAllowed: true
 loginWithEmailAllowed: true
 rememberMe: false
 verifyEmail: false
-resetPasswordAllowed: false
+resetPasswordAllowed: true
 accessTokenLifespan: 300
 ssoSessionIdleTimeout: 1800
 ssoSessionMaxLifespan: 36000
